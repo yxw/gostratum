@@ -33,7 +33,8 @@ func Connect(host string) (*Client, error) {
 	client.decoder = MakeDecoder()
 	client.encoder = MakeEncoder()
 	client.SetTimeout(10)
-	go client.Listen()
+	//go client.Listen()
+	go client.ListenForResponse()
 	return &client, nil
 }
 
@@ -69,8 +70,8 @@ func (c *Client) Listen() {
 	}
 }
 
-func (c *Client) read(conn net.Conn) {
-	connbuff := bufio.NewReaderSize(conn, 10*1024)
+func (c *Client) ListenForResponse() {
+	connbuff := bufio.NewReaderSize(c.socket, 10*1024)
 	//client.Conn.SetDeadline(time.Now().Add(client.TimeOut * time.Second))
 	for {
 		data, isPrefix, err := connbuff.ReadLine()
@@ -109,8 +110,8 @@ func (c *Client) read(conn net.Conn) {
 			c.dispatcher.Process(response)
 		}
 	}
-	log.Printf("Disconnect from %s", conn.RemoteAddr().String())
-	conn.Close()
+	log.Printf("Disconnect from %s", c.socket.RemoteAddr().String())
+	c.socket.Close()
 }
 
 func (c *Client) scan(conn net.Conn) {
